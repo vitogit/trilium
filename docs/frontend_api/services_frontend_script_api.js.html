@@ -108,7 +108,6 @@ function FrontendScriptApi(startNote, currentNote, originEntity = null) {
 
         if (opts.shortcut) {
             $(document).bind('keydown', opts.shortcut, opts.action);
-
             button.attr("title", "Shortcut " + opts.shortcut);
         }
     };

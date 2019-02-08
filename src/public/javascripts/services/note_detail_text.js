@@ -8,23 +8,20 @@ const $component = $('#note-detail-text');
 let textEditor = null;
 
 async function show() {
-    if (!textEditor) {
-        await libraryLoader.requireLibrary(libraryLoader.CKEDITOR);
-
-        // textEditor might have been initialized during previous await so checking again
-        // looks like double initialization can freeze CKEditor pretty badly
-        if (!textEditor) {
-            textEditor = await BalloonEditor.create($component[0]);
-
-            onNoteChange(noteDetailService.noteChanged);
-        }
-    }
-
-    textEditor.isReadOnly = await isReadOnly();
-
-    textEditor.setData(noteDetailService.getCurrentNote().content);
-
-    $component.show();
+    // onNoteChange(noteDetailService.noteChanged);
+    // isReadOnly = await isReadOnly();
+    let content = noteDetailService.getCurrentNote().content
+    const element = document.createElement('div')
+    element.innerHTML = content.trim()
+    $('<div/>').html(content.trim())
+    
+    // TODO improve the way to load the doc
+    let state = EditorState.create({
+      doc: DOMParser.fromSchema(mySchema).parse(element),
+      // editable: !isReadOnly,
+      plugins: exampleSetup({schema: mySchema}).concat(newKeymap).concat(statsPlugin)
+    })
+    window.prosemirrorview.updateState(state)
 }
 
 function getContent() {
@@ -54,7 +51,7 @@ function getEditor() {
 }
 
 function onNoteChange(func) {
-    textEditor.model.document.on('change:data', func);
+    // textEditor.model.document.on('change:data', func);
 }
 
 $component.on("dblclick", "img", e => {

@@ -215,6 +215,12 @@
     window.appCssNoteIds = <%- JSON.stringify(appCssNoteIds) %>;
 </script>
 
+<!--TODO Use rollup to generate prosemirror -->
+<link rel=stylesheet href="https://prosemirror.net/css/editor.css">
+<script src="https://prosemirror.net/examples/prosemirror.js"></script>
+<script src="libraries/require-pm.js"></script>
+<script src="libraries/prosemirror.js"></script>
+
 <!-- Required for correct loading of scripts in Electron -->
 <script>if (typeof module === 'object') {window.module = module; module = undefined;}</script>
 
@@ -248,5 +254,7 @@
     // final form which is pretty ugly.
     $("#container").show();
 </script>
+
+
 </body>
 </html>

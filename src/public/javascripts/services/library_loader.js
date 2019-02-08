@@ -1,7 +1,5 @@
 import cssLoader from './css_loader.js';
 
-const CKEDITOR = {"js": ["libraries/ckeditor/ckeditor.js"]};
-
 const CODE_MIRROR = {
     js: [
         "libraries/codemirror/codemirror.js",
@@ -63,7 +61,6 @@ async function requireScript(url) {
 
 export default {
     requireLibrary,
-    CKEDITOR,
     CODE_MIRROR,
     ESLINT,
     COMMONMARK,
