@@ -6,12 +6,8 @@ const {addListNodes, sinkListItem, liftListItem, splitListItem} = require("prose
 const {exampleSetup} = require("prosemirror-example-setup")
   const {keymap} = require("prosemirror-keymap")
 
-let statsPlugin = new Plugin({
-  state: {
-    init(_, {doc}) { console.log('text', doc.textContent); return showStats(doc.textContent) },
-    apply(tr, old) { return tr.docChanged ? showStats(tr.doc.textContent) : old }
-  }
-})
+
+
 
 // Mix the nodes from prosemirror-schema-list into the basic schema to
 // create a schema with list support.
@@ -28,7 +24,7 @@ let newKeymap = keymap({
 window.prosemirrorview = new EditorView(document.querySelector("#note-detail-text"), {
   state: EditorState.create({
     doc: DOMParser.fromSchema(mySchema).parse(""),
-    plugins: exampleSetup({schema: mySchema}).concat(newKeymap).concat(statsPlugin)
+    plugins: exampleSetup({schema: mySchema}).concat(newKeymap)
   })
 })
 
