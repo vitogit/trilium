@@ -5,6 +5,22 @@ const {schema} = require("prosemirror-schema-basic")
 const {addListNodes, sinkListItem, liftListItem, splitListItem} = require("prosemirror-schema-list")
 const {exampleSetup} = require("prosemirror-example-setup")
 const {keymap} = require("prosemirror-keymap")
+const {inputRules, InputRule} = require("prosemirror-inputrules")
+
+const rules = [
+  new InputRule(/aaa$/, 'Vito'),
+
+  new InputRule(
+    /((https?:\/\/)?[\w-]+(\.[\w-]+)+\.?(:\d+)?(\/\S*)?) $/,
+    function(pm, match, start, end) {
+      const url = match[1];
+      let link = mySchema.marks.link.create({
+        href : url
+      })
+      return pm.tr.addMark(start, end, link);
+    }
+  )
+];
 
 function showStats(text) {
   console.log("text.length________",text.length)
@@ -55,7 +71,7 @@ function loadContent( content ) {
     let state = EditorState.create({
       doc: doc,
       // editable: !isReadOnly,
-      plugins: exampleSetup({schema: mySchema}).concat(newKeymap).concat(statsPlugin).concat(savePlugin)
+      plugins:  exampleSetup({schema: mySchema}).concat(newKeymap).concat(statsPlugin).concat(savePlugin).concat(inputRules({rules}))
     })
     window.prosemirrorview.updateState(state)
 }
@@ -63,7 +79,7 @@ function loadContent( content ) {
 window.prosemirrorview = new EditorView(document.querySelector("#note-detail-text"), {
   state: EditorState.create({
     doc: DOMParser.fromSchema(mySchema).parse(""),
-    plugins: exampleSetup({schema: mySchema}).concat(newKeymap)
+    plugins: exampleSetup({schema: mySchema}).concat(newKeymap).concat(statsPlugin).concat(savePlugin).concat(inputRules({rules}))
   })
 })
 
