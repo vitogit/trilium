@@ -1,11 +1,107 @@
 const {EditorState, Plugin, TextSelection} = require("prosemirror-state")
 const {EditorView} = require("prosemirror-view")
 const {Schema, DOMParser} = require("prosemirror-model")
-const {schema} = require("prosemirror-schema-basic")
+const {schema, marks} = require("prosemirror-schema-basic")
 const {addListNodes, sinkListItem, liftListItem, splitListItem} = require("prosemirror-schema-list")
-const {exampleSetup} = require("prosemirror-example-setup")
+const {exampleSetup, buildMenuItems} = require("prosemirror-example-setup")
 const {keymap} = require("prosemirror-keymap")
 const {inputRules, InputRule} = require("prosemirror-inputrules")
+const {MenuItem} = require("prosemirror-menu")
+const {toggleMark} = require("prosemirror-commands")
+
+const supportedColors = ["yellow", "lime", "red", ]
+const colorMarks = {}
+supportedColors.forEach(function (color) {
+  return colorMarks[color] = createColorMark(color, supportedColors);
+});
+
+
+const mySchema = new Schema({
+  nodes: addListNodes(schema.spec.nodes, "paragraph block*", "block"),
+  marks: { ...marks, ...colorMarks }
+})
+
+// =================================================
+// HIGHLIGHT TODO transform to a plugin
+// =================================================
+function cmdItem(cmd, options) {
+  var passedOptions = {
+    label: options.title,
+    run: cmd
+  };
+
+  for (var prop in options) {
+    passedOptions[prop] = options[prop];
+  }
+
+  if ((!options.enable || options.enable === true) && !options.select) passedOptions[options.enable ? "enable" : "select"] = function (state) {
+    return cmd(state);
+  };
+  return new MenuItem(passedOptions);
+}
+
+function markActive(state, type) {
+  var _state$selection = state.selection,
+      from = _state$selection.from,
+      $from = _state$selection.$from,
+      to = _state$selection.to,
+      empty = _state$selection.empty;
+  if (empty) return type.isInSet(state.storedMarks || $from.marks());else return state.doc.rangeHasMark(from, to, type);
+}
+
+function markItem(markType, options) {
+  var passedOptions = {
+    active: function active(state) {
+      return markActive(state, markType);
+    },
+    enable: true
+  };
+
+  for (var prop in options) {
+    passedOptions[prop] = options[prop];
+  }
+
+  return cmdItem(toggleMark(markType), passedOptions);
+}
+
+function createColorMark(color, colors) {
+  return {
+    attrs: {
+      style: {
+        default: "background-color: ".concat(color, ";")
+      }
+    },
+    excludes: colors.join(" "),
+    parseDOM: [{
+      style: "background-color=".concat(color),
+      attrs: {
+        style: "background-color: ".concat(color)
+      }
+    }],
+    toDOM: function toDOM(node) {
+      return ["span", {
+        style: node.attrs.style
+      }, 0];
+    }
+  };
+}
+
+
+var menu = buildMenuItems(mySchema);
+
+function createColorMenuItem(color) {
+  return markItem(mySchema.marks[color], {
+    title: "Toggle strong style",
+    label: color
+  });
+}
+
+supportedColors.forEach(function (color) {
+  return menu.blockMenu[0].push(createColorMenuItem(color));
+});
+// =================================================
+// HIGHLIGHT
+// =================================================
 
 const rules = [
   new InputRule(/aaa$/, 'Vito'),
@@ -40,12 +136,7 @@ let savePlugin = new Plugin({
   }
 })
 
-// Mix the nodes from prosemirror-schema-list into the basic schema to
-// create a schema with list support.
-const mySchema = new Schema({
-  nodes: addListNodes(schema.spec.nodes, "paragraph block*", "block"),
-  marks: schema.spec.marks
-})
+
 
 let newKeymap = keymap({
   'Shift-Tab': liftListItem(mySchema.nodes.list_item),
@@ -71,7 +162,7 @@ function loadContent( content ) {
     let state = EditorState.create({
       doc: doc,
       // editable: !isReadOnly,
-      plugins:  exampleSetup({schema: mySchema}).concat(newKeymap).concat(statsPlugin).concat(savePlugin).concat(inputRules({rules}))
+      plugins:  exampleSetup({schema: mySchema, menuContent: menu.fullMenu}).concat(newKeymap).concat(statsPlugin).concat(savePlugin).concat(inputRules({rules}))
     })
     window.prosemirrorview.updateState(state)
 }
@@ -79,7 +170,7 @@ function loadContent( content ) {
 window.prosemirrorview = new EditorView(document.querySelector("#note-detail-text"), {
   state: EditorState.create({
     doc: DOMParser.fromSchema(mySchema).parse(""),
-    plugins: exampleSetup({schema: mySchema}).concat(newKeymap).concat(statsPlugin).concat(savePlugin).concat(inputRules({rules}))
+    plugins: exampleSetup({schema: mySchema, menuContent: menu.fullMenu}).concat(newKeymap).concat(statsPlugin).concat(savePlugin).concat(inputRules({rules}))
   })
 })
 
