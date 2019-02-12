@@ -1,20 +1,21 @@
-const {EditorState, Plugin, TextSelection} = require("prosemirror-state")
-const {EditorView} = require("prosemirror-view")
-const {Schema, DOMParser} = require("prosemirror-model")
-const {schema, marks} = require("prosemirror-schema-basic")
-const {addListNodes, sinkListItem, liftListItem, splitListItem} = require("prosemirror-schema-list")
-const {exampleSetup, buildMenuItems} = require("prosemirror-example-setup")
-const {keymap} = require("prosemirror-keymap")
-const {inputRules, InputRule} = require("prosemirror-inputrules")
-const {MenuItem} = require("prosemirror-menu")
-const {toggleMark} = require("prosemirror-commands")
+import {EditorState, Plugin} from 'prosemirror-state'
+import {EditorView} from 'prosemirror-view'
+import {Schema, DOMParser} from 'prosemirror-model'
+import {schema, marks} from 'prosemirror-schema-basic'
+import {addListNodes, sinkListItem, liftListItem, splitListItem} from 'prosemirror-schema-list'
+import {exampleSetup, buildMenuItems} from 'prosemirror-example-setup'
+import {keymap} from 'prosemirror-keymap'
+import {inputRules, InputRule} from 'prosemirror-inputrules'
+import {MenuItem} from 'prosemirror-menu'
+import {toggleMark} from 'prosemirror-commands'
+import {statsPlugin} from './stats-plugin.js'
+import {savePlugin} from './save-plugin.js'
 
 const supportedColors = ["yellow", "lime", "red", ]
 const colorMarks = {}
 supportedColors.forEach(function (color) {
   return colorMarks[color] = createColorMark(color, supportedColors);
 });
-
 
 const mySchema = new Schema({
   nodes: addListNodes(schema.spec.nodes, "paragraph block*", "block"),
@@ -86,7 +87,6 @@ function createColorMark(color, colors) {
   };
 }
 
-
 var menu = buildMenuItems(mySchema);
 
 function createColorMenuItem(color) {
@@ -118,26 +118,6 @@ const rules = [
   )
 ];
 
-function showStats(text) {
-  console.log("text.length________",text.length)
-}
-
-let statsPlugin = new Plugin({
-  state: {
-    init(_, {doc}) { return showStats(doc.textContent) },
-    apply(tr, old) { return tr.docChanged ? showStats(tr.doc.textContent) : old }
-  }
-})
-
-let savePlugin = new Plugin({
-  state: {
-    init(_, {doc}) { return console.log('loaded') },
-    apply(tr, old) { return tr.docChanged ? window.glob.noteChanged() : old }
-  }
-})
-
-
-
 let newKeymap = keymap({
   'Shift-Tab': liftListItem(mySchema.nodes.list_item),
   'Tab': sinkListItem(mySchema.nodes.list_item)
@@ -162,7 +142,7 @@ function loadContent( content ) {
     let state = EditorState.create({
       doc: doc,
       // editable: !isReadOnly,
-      plugins:  exampleSetup({schema: mySchema, menuContent: menu.fullMenu}).concat(newKeymap).concat(statsPlugin).concat(savePlugin).concat(inputRules({rules}))
+      plugins:  exampleSetup({schema: mySchema, menuContent: menu.fullMenu}).concat(statsPlugin).concat(newKeymap).concat(savePlugin).concat(inputRules({rules}))
     })
     window.prosemirrorview.updateState(state)
 }
@@ -170,7 +150,7 @@ function loadContent( content ) {
 window.prosemirrorview = new EditorView(document.querySelector("#note-detail-text"), {
   state: EditorState.create({
     doc: DOMParser.fromSchema(mySchema).parse(""),
-    plugins: exampleSetup({schema: mySchema, menuContent: menu.fullMenu}).concat(newKeymap).concat(statsPlugin).concat(savePlugin).concat(inputRules({rules}))
+    plugins: exampleSetup({schema: mySchema, menuContent: menu.fullMenu}).concat(statsPlugin).concat(newKeymap).concat(savePlugin).concat(inputRules({rules}))
   })
 })
 
@@ -180,3 +160,4 @@ prosemirrorview.getContent = function() {
   console.log("getcontent")
   return JSON.stringify(window.prosemirrorview.state.doc.toJSON());
 }
+
